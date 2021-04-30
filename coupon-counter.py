@@ -5,9 +5,15 @@
 import os
 import subprocess
 import time
+import csv
+from datetime import datetime
 
 import dependencies
 dependencies.installAll()
+
+import tkinter as tk
+from tkinter import simpledialog
+
 
 #global variables
 running = True
@@ -15,8 +21,11 @@ readingChars = False
 cmdBuffer = ""
 codes = []
 codesName = "codes.txt"
-
-
+csvFileName = "codesData.csv"
+csvFile = None
+csvWriter = None
+locationFileName = "location.txt"
+location = ""
 
 from pynput.keyboard import Key, Listener, Controller
 
@@ -55,17 +64,49 @@ def printBuffer():
 	global cmdBuffer
 	print("Current input: " + cmdBuffer)
 
+def askLocation():
+	root = tk.Tk()
+
+	root.withdraw()
+
+	locationResult = ""
+
+	while(locationResult == ""):
+
+		#ask for input
+		userInput = simpledialog.askstring(title="Location?", prompt="What location is this for?\nd - Devonshire\nt - Tecumseh")
+
+		if(userInput.upper() == "D"):
+			locationResult = "DEVONSHIRE"
+
+		if(userInput.upper() == "T"):
+			locationResult = "TECUMSEH"
+
+	root.destroy()
+
+	return locationResult
 
 def attemptExecution():
-	global cmdBuffer
+	global cmdBuffer, csvWriter, location
 
 	printBuffer()
 
 
 	for code in codes:
-		if cmdBuffer == code:
+		if cmdBuffer.upper() == code.upper():
 			clearBuffer()
 			changeMode() #stop reading input
+
+			locationChoice = location
+
+			#check if we need to ask for the location
+			if(location == 'CHOOSE'):
+				#we need to ask the location
+				locationChoice = askLocation()
+
+			#write to csv file
+			csvWriter.writerow([locationChoice, datetime.now().strftime("%Y/%m/%d"), code])
+
 			break
 
 def on_press(key):
@@ -111,14 +152,61 @@ def printCodes():
 	for code in codes:
 		print(code)
 
+def askLocationWithChooseOption():
+	root = tk.Tk()
+
+	root.withdraw()
+
+	locationResult = ""
+
+	while(locationResult == ""):
+
+		#ask for input
+		userInput = simpledialog.askstring(title="Location?", prompt="What location is this for?\nd - Devonshire\nt - Tecumseh\nc - Choose every time")
+
+		if(userInput.upper() == "D"):
+			locationResult = "DEVONSHIRE"
+
+		if(userInput.upper() == "T"):
+			locationResult = "TECUMSEH"
+
+		if(userInput.upper() == "C"):
+			locationResult = "CHOOSE"
+
+	root.destroy()
+
+	return locationResult
+
 
 def init():
-	global codes, codesName
+	global codes, codesName, csvFileName, csvFile, csvWriter, locationFileName, location
 
+	#seeing if location file exists
+	if(not os.path.exists(locationFileName)):
+		with open(locationFileName, 'w') as writer:
+			#asking user for location and writing their choice
+			location = askLocationWithChooseOption()
+			print("Chosen location: " + location)
+			writer.write(location)
+	else:
+		with open(locationFileName, 'r') as reader:
+			location = reader.read().strip()
+
+	#creating base csv file if it doesn't exist
+	if(not os.path.exists(csvFileName)):
+		with open(csvFileName, 'w', newline='\n') as tempCsvFile:
+			tempCsvWriter = csv.writer(tempCsvFile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+			tempCsvWriter.writerow(['Location', 'Time', 'Code'])
+
+	csvFile = open(csvFileName, 'a', newline='\n') #open csv file for appending
+	csvWriter = csv.writer(csvFile, delimiter = ',', quotechar = '|', quoting=csv.QUOTE_MINIMAL)
+
+	#Creating sample code file if the code file doesn't exist
 	if(not os.path.exists(codesName)):
 		with open(codesName, 'w') as reader:
 			reader.write("samplecode1, samplecode2")
 
+	#reading from code file
 	with open(codesName, 'r') as reader:
 		fileData = reader.read()
 		fileList = fileData.split(",")
@@ -131,10 +219,16 @@ def init():
 
 def main():
 
+	global csvFile
+
 	init()
 
 	while(running):
 		time.sleep(1)
+
+	#close csv file (save changes)
+	csvFile.close()
+
 	exit()
 
 if __name__ == "__main__":
