@@ -116,11 +116,13 @@ def on_press(key):
 		if (cmdBuffer != None and len(cmdBuffer)!=0):
 			cmdBuffer = cmdBuffer[0:-1]
 			printBuffer()
-	if(key == Key.esc):
-		running=False
-		return False
 
 	try:
+		if(key.char == '\\'):
+			running=False
+			removeChar()
+			return False
+
 		if(key.char == '`'):
 			removeChar()
 			changeMode()
@@ -216,6 +218,7 @@ def init():
 
 
 	printCodes()
+	print("Press \ to save the results and exit")
 
 def main():
 
