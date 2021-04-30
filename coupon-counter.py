@@ -8,6 +8,7 @@ import time
 import csv
 from datetime import datetime
 import atexit
+import signal
 
 import dependencies
 dependencies.installAll()
@@ -224,11 +225,14 @@ def init():
 	#ensures files are saved at exit
 	atexit.register(exitSafely)
 
+	signal.signal(signal.SIGTERM, exitSafely)
+
 
 def exitSafely():
 	global csvFile
 	csvFile.close()
 	print("Saved CSV File before exiting...")
+	exit()
 
 def main():
 
