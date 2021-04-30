@@ -26,6 +26,10 @@ codesName = "codes.txt"
 csvFileName = "codesData.csv"
 locationFileName = "location.txt"
 location = ""
+removeLastCommand = "REMOVELAST"
+printCommand = "PRINT"
+startOfCsvFile = ['Location', 'Time', 'Code']
+
 
 from pynput.keyboard import Key, Listener, Controller
 
@@ -64,6 +68,15 @@ def printBuffer():
 	global cmdBuffer
 	print("Current input: " + cmdBuffer)
 
+def printCodeList():
+	with open(csvFileName, 'r', newline='\n') as csvFile: #open csv file for appending
+		csvReader = csv.reader(csvFile, delimiter = ',', quotechar = '|', quoting=csv.QUOTE_MINIMAL)
+		print("Current Codes Logged:")
+		for row in csvReader:
+			print(" | ".join(row))
+			print("____________________________________")
+
+
 def askLocation():
 	root = tk.Tk()
 
@@ -87,7 +100,7 @@ def askLocation():
 	return locationResult
 
 def attemptExecution():
-	global cmdBuffer, csvWriter, location
+	global cmdBuffer, csvWriter, location, removeLastCommand, printCommand
 
 	printBuffer()
 
@@ -108,6 +121,37 @@ def attemptExecution():
 			writeToCsvFile([locationChoice, datetime.now().strftime("%Y/%m/%d"), code])
 
 			break
+		elif cmdBuffer.upper() == removeLastCommand:
+			clearBuffer()
+			changeMode() #stop reading input
+
+			removeLastLineFromCsvFile()
+
+		elif cmdBuffer.upper() == printCommand:
+			clearBuffer()
+			changeMode() #stop reading input
+			printCodeList()
+
+def removeLastLineFromCsvFile():
+	global csvFileName, startOfCsvFile
+	lines = None
+
+	with open(csvFileName, "r", newline='\n') as file:
+		reader = csv.reader(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+
+		data = []
+
+		for line in reader:
+			data.append(line)
+
+		data = data[1:-1]
+
+	with open(csvFileName, "w", newline='\n') as file:
+		writer = csv.writer(file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+		writer.writerow(startOfCsvFile)
+		for line in data:
+			writer.writerow(line)
+
 
 def on_press(key):
 	global running, readingChars, cmdBuffer
@@ -186,7 +230,7 @@ def writeToCsvFile(data):
 
 
 def init():
-	global codes, codesName, csvFileName, csvFile, csvWriter, locationFileName, location
+	global codes, codesName, csvFileName, csvFile, csvWriter, locationFileName, location, startOfCsvFile
 
 	#seeing if location file exists
 	if(not os.path.exists(locationFileName)):
@@ -203,7 +247,7 @@ def init():
 	if(not os.path.exists(csvFileName)):
 		with open(csvFileName, 'w', newline='\n') as tempCsvFile:
 			tempCsvWriter = csv.writer(tempCsvFile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-			tempCsvWriter.writerow(['Location', 'Time', 'Code'])
+			tempCsvWriter.writerow(startOfCsvFile)
 
 	#Creating sample code file if the code file doesn't exist
 	if(not os.path.exists(codesName)):
@@ -242,9 +286,6 @@ def main():
 
 	while(running):
 		time.sleep(1)
-
-	#close csv file (save changes)
-	csvFile.close()
 
 	exit()
 
