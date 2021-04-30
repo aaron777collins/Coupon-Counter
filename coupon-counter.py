@@ -7,6 +7,7 @@ import subprocess
 import time
 import csv
 from datetime import datetime
+import atexit
 
 import dependencies
 dependencies.installAll()
@@ -219,6 +220,15 @@ def init():
 
 	printCodes()
 	print("Press \ to save the results and exit")
+
+	#ensures files are saved at exit
+	atexit.register(exitSafely)
+
+
+def exitSafely():
+	global csvFile
+	csvFile.close()
+	print("Saved CSV File before exiting...")
 
 def main():
 
