@@ -24,8 +24,6 @@ cmdBuffer = ""
 codes = []
 codesName = "codes.txt"
 csvFileName = "codesData.csv"
-csvFile = None
-csvWriter = None
 locationFileName = "location.txt"
 location = ""
 
@@ -107,7 +105,7 @@ def attemptExecution():
 				locationChoice = askLocation()
 
 			#write to csv file
-			csvWriter.writerow([locationChoice, datetime.now().strftime("%Y/%m/%d"), code])
+			writeToCsvFile([locationChoice, datetime.now().strftime("%Y/%m/%d"), code])
 
 			break
 
@@ -181,6 +179,11 @@ def askLocationWithChooseOption():
 
 	return locationResult
 
+def writeToCsvFile(data):
+	with open(csvFileName, 'a', newline='\n') as csvFile: #open csv file for appending
+		csvWriter = csv.writer(csvFile, delimiter = ',', quotechar = '|', quoting=csv.QUOTE_MINIMAL)
+		csvWriter.writerow(data)
+
 
 def init():
 	global codes, codesName, csvFileName, csvFile, csvWriter, locationFileName, location
@@ -202,9 +205,6 @@ def init():
 			tempCsvWriter = csv.writer(tempCsvFile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 			tempCsvWriter.writerow(['Location', 'Time', 'Code'])
 
-	csvFile = open(csvFileName, 'a', newline='\n') #open csv file for appending
-	csvWriter = csv.writer(csvFile, delimiter = ',', quotechar = '|', quoting=csv.QUOTE_MINIMAL)
-
 	#Creating sample code file if the code file doesn't exist
 	if(not os.path.exists(codesName)):
 		with open(codesName, 'w') as reader:
@@ -223,16 +223,16 @@ def init():
 	print("Press \ to save the results and exit")
 
 	#ensures files are saved at exit
-	atexit.register(exitSafely)
+	#atexit.register(exitSafely)
 
-	signal.signal(signal.SIGTERM, exitSafely)
+	#signal.signal(signal.SIGTERM, exitSafely)
 
 
-def exitSafely():
-	global csvFile
-	csvFile.close()
-	print("Saved CSV File before exiting...")
-	exit()
+#def exitSafely():
+#	global csvFile
+#	csvFile.close()
+#	print("Saved CSV File before exiting...")
+#	exit()
 
 def main():
 
